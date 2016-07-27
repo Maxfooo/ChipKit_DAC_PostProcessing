@@ -77,6 +77,7 @@ class ExtractData(object):
                         break
                     self.sampleDict[word[0]] = [voltage]
                     self.pswDict[word[0]] = [word[2]]
+                    sampleCount = 0
                 
                 prevCode = word[0]
                 lineNum += 1
