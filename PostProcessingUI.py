@@ -19,6 +19,8 @@ class PostProcessingUI(Frame):
         self.dnlFile = None
         self.inlFile = None
         
+        self.buttonColor = 'pink'
+        
         self.menuBar()
         self.mainFrame()
         
@@ -31,7 +33,7 @@ class PostProcessingUI(Frame):
         openFileFrame = Frame(paramInputFrame)
         openFileLabel_0 = Label(openFileFrame, text='Open File: ', anchor='w', width=22)
         openFileLabel_0.pack(side=LEFT)
-        openFileButton = Button(openFileFrame, text='Open',bg='light green', command=self.getFile, width=16)
+        openFileButton = Button(openFileFrame, text='Open',bg=self.buttonColor, command=self.getFile, width=16)
         openFileButton.pack(side=LEFT)
         openFileLabel_1 = Label(openFileFrame, text='File')
         openFileLabel_1.pack(side=LEFT)
@@ -140,7 +142,7 @@ class PostProcessingUI(Frame):
         
         "Begin Processing Frame************************************************"
         beginProcessingButtonFrame = LabelFrame(self, text='Begin Processing')
-        beginProcessingButton = Button(beginProcessingButtonFrame, text='Begin Processing', command=self.beginProcessing, bg='light green')
+        beginProcessingButton = Button(beginProcessingButtonFrame, text='Begin Processing', command=self.beginProcessing, bg=self.buttonColor)
         beginProcessingButton.pack(fill=BOTH)
         beginProcessingButtonFrame.pack(fill=BOTH)
         
