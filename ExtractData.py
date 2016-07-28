@@ -16,6 +16,7 @@ psw = binray, 4-8 bits, specified in
 http://www.analog.com/media/en/technical-documentation/data-sheets/AD7780.pdf
 
 """
+import re
 
 BREAK_WHEN_ERR = False
 
@@ -47,6 +48,10 @@ class ExtractData(object):
             sampleCount = SAMPLES_PER_CODE-1
             for line in f:
                 word = line.split(',')
+                
+                if re.search('[a-zA-Z]', word[0]):
+                    continue
+                
                 word[0] = int(word[0])
                 
                 if self.specCase:
