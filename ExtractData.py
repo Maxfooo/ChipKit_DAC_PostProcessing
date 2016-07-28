@@ -22,6 +22,7 @@ BREAK_WHEN_ERR = False
 ADC_PRECISION = 24
 MAX_ADC_VALUE = 2**ADC_PRECISION-1
 SAMPLES_PER_CODE = 10
+MAX_VOLTAGE = 3.3
 ERR_0 = 'Too Many Samples'
 ERR_1 = 'Too Few Samples'
 ERR_2 = 'Repeat Code'
@@ -30,24 +31,30 @@ ERR_3 = 'Out of Order Code'
 
 class ExtractData(object):
     
-    def __init__(self, fileName):
+    def __init__(self, fileName, specialCase=False):
         self.fileName = fileName
-        
+        self.specCase = specialCase
         self.extractData()
         self.generateErrorLog()
     
     def extractData(self):
         self.sampleDict = {}
         self.pswDict = {}
-        prevCode = 0
+        prevCode = -1
         self.errorDict = {ERR_0 : [], ERR_1: [], ERR_2: [], ERR_3: []}
         with open(self.fileName, 'r') as f:
             lineNum = 0
-            sampleCount = 0
+            sampleCount = SAMPLES_PER_CODE-1
             for line in f:
                 word = line.split(',')
                 word[0] = int(word[0])
-                voltage = float(int(word[1], 2)) / MAX_ADC_VALUE
+                
+                if self.specCase:
+                    word[1] = word[1][1:] # remove first bit for special case
+                    _max_adc_value = 2**(ADC_PRECISION-1)-1
+                    voltage = (float(int(word[1], 2)) / _max_adc_value) * MAX_VOLTAGE
+                else:                
+                    voltage = (float(int(word[1], 2)) / MAX_ADC_VALUE) * MAX_VOLTAGE
                 
                 if prevCode == word[0]:
                     if sampleCount >= SAMPLES_PER_CODE:
