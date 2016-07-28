@@ -24,7 +24,7 @@ if __name__ == '__main__':
     print(volt)
     dnl = DNL(volt, LSB)
     print(dnl)
-    quickPlot(dnl)
+    quickPlot(dnl, ttl="DNL of 12 bit dac", xlbl="Code", ylbl="LSB")
     
     
     
