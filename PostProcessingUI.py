@@ -21,7 +21,7 @@ class PostProcessingUI(Frame):
         self.dnlFile = None
         self.inlFile = None
         
-        self.buttonColor = 'pink'
+        self.buttonColor = '#000fff000'
         
         self.menuBar()
         self.mainFrame()
@@ -41,15 +41,15 @@ class PostProcessingUI(Frame):
         openFileLabel_1.pack(side=LEFT)
         openFileFrame.pack(fill=BOTH)
         
-        adcPrecisionFrame = Frame(paramInputFrame)
-        adcPrecisionLabel_0 = Label(adcPrecisionFrame, text='ADC Precision: ', anchor='w', width=22)
-        adcPrecisionLabel_0.pack(side=LEFT)
-        adcPrecision = StringVar()
-        self.adcPrecisionEntry = Entry(adcPrecisionFrame, textvariable=adcPrecision)
-        self.adcPrecisionEntry.pack(side=LEFT)
-        adcPrecisionLabel_1 = Label(adcPrecisionFrame, text='Bits')
-        adcPrecisionLabel_1.pack(side=LEFT)
-        adcPrecisionFrame.pack(fill=BOTH)
+        dacPrecisionFrame = Frame(paramInputFrame)
+        dacPrecisionLabel_0 = Label(dacPrecisionFrame, text='DAC Precision: ', anchor='w', width=22)
+        dacPrecisionLabel_0.pack(side=LEFT)
+        dacPrecision = StringVar()
+        self.dacPrecisionEntry = Entry(dacPrecisionFrame, textvariable=dacPrecision)
+        self.dacPrecisionEntry.pack(side=LEFT)
+        dacPrecisionLabel_1 = Label(dacPrecisionFrame, text='Bits')
+        dacPrecisionLabel_1.pack(side=LEFT)
+        dacPrecisionFrame.pack(fill=BOTH)
         
         sampleFrame = Frame(paramInputFrame)
         sampleLabel_0 = Label(sampleFrame, text='Expected Samples Per Code: ', anchor='w', width=22)
