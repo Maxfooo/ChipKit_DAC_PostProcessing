@@ -6,7 +6,9 @@ Created on Jul 28, 2016
 
 from tkinter import *
 from ExtractData import ExtractData
+from menuTexts import specialCaseText
 from FileIO import FileIO
+from tkinter import messagebox
 
 class PostProcessingUI(Frame):
     def __init__(self, master=None):
@@ -67,7 +69,15 @@ class PostProcessingUI(Frame):
         self.maxVoltEntry.pack(side=LEFT)
         maxVoltLabel_1 = Label(maxVoltFrame, text="Volts")
         maxVoltLabel_1.pack(side=LEFT)
-        maxVoltFrame.pack(fill=BOTH)        
+        maxVoltFrame.pack(fill=BOTH)      
+        
+        specialCaseFrame = Frame(paramInputFrame)
+        self.specialCase = IntVar()
+        specialCaseCheckbutton = Checkbutton(specialCaseFrame, text='Special Case? (see help for details)', \
+                                             variable=self.specialCase, onvalue=1, \
+                                             offvalue=0, anchor='w', width=22) 
+        specialCaseCheckbutton.pack(fill=BOTH)
+        specialCaseFrame.pack(fill=BOTH) 
         
         paramInputFrame.pack(fill=BOTH)
         
@@ -175,6 +185,8 @@ class PostProcessingUI(Frame):
         helpmenu = Menu(self.menubar, tearoff=0)
         helpmenu.add_command(label="How To Use", command=self.howToUseMenu)
         helpmenu.add_command(label="About", command=self.aboutMenu)
+        helpmenu.add_separator()
+        helpmenu.add_command(label='Special Case', command=self.specialCaseMenu)
         self.menubar.add_cascade(label="Help", menu=helpmenu)
 
         self.master.config(menu=self.menubar)
@@ -187,3 +199,6 @@ class PostProcessingUI(Frame):
     
     def howToUseMenu(self):
         pass
+    
+    def specialCaseMenu(self):
+        messagebox.showinfo("Special Case", specialCaseText)
