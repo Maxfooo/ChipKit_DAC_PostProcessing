@@ -6,7 +6,7 @@ Created on Jul 28, 2016
 
 from tkinter import *
 from ExtractData import ExtractData
-from menuTexts import specialCaseText
+from menuTexts import *
 from FileIO import FileIO
 from tkinter import messagebox
 from Utils import serial_ports
@@ -161,6 +161,13 @@ class PostProcessingUI(Frame):
                                              variable=self.specialCase, onvalue=1, \
                                              offvalue=0, anchor='w', width=22) 
         specialCaseCheckbutton.pack(fill=BOTH)
+        
+        self.breakIfErrorVar = BooleanVar()
+        breakIfErrorCheckbutton = Checkbutton(specialCaseFrame, text="Break if error in processing? (see help for details)", \
+                                              variable=self.breakIfErrorVar, onvalue=True, \
+                                              offvalue=False, anchor='w', width=22)
+        breakIfErrorCheckbutton.pack( fill=BOTH)
+        
         specialCaseFrame.pack(fill=BOTH) 
         
         paramInputFrame.pack(fill=BOTH)
@@ -196,7 +203,7 @@ class PostProcessingUI(Frame):
                                          offvalue=0, anchor='w', width=20)
         dataPlotRawCheckbutton.pack(side=LEFT)
         self.dataPlotAverage = IntVar()
-        dataPlotAverageCheckbutton = Checkbutton(dataPlotFrame, text='Plot Average Samples?', \
+        dataPlotAverageCheckbutton = Checkbutton(dataPlotFrame, text='Plot Sample Averages?', \
                                          variable=self.dataPlotAverage, onvalue=1, \
                                          offvalue=0)
         dataPlotAverageCheckbutton.pack(side=LEFT)
@@ -251,11 +258,19 @@ class PostProcessingUI(Frame):
     def beginProcessing(self):
         try:
             self.postProcFile = open(self.postProcFilePath, 'r')
-            # do post processing
+            _chipSpecs = [int(self.adcPrecisionEntry.get()),
+                          2**int(self.adcPrecisionEntry.get()) - 1,
+                          int(self.sampleEntry.get()),
+                          float(self.maxVoltEntry.get())]
+            self.ED = ExtractData(file=self.postProcFile, chipSpecs=_chipSpecs, \
+                                  specialCase=self.specialCase.get(), \
+                                  break_when_err=self.breakIfErrorVar.get())
         
             self.postProcFile.close()
         except IOError:
             messagebox.showerror("File Error", "Could not open file.")
+        except ValueError:
+            messagebox.showerror("Value Error", "Wrong value or type for post proc entry.")
         
     def refreshComPorts(self):
         try:
@@ -343,6 +358,7 @@ class PostProcessingUI(Frame):
         helpmenu.add_command(label="About", command=self.aboutMenu)
         helpmenu.add_separator()
         helpmenu.add_command(label='Special Case', command=self.specialCaseMenu)
+        helpmenu.add_command(label='Break if error', command=self.breakIfErrorMenu)
         self.menubar.add_cascade(label="Help", menu=helpmenu)
 
         self.master.config(menu=self.menubar)
@@ -358,3 +374,6 @@ class PostProcessingUI(Frame):
     
     def specialCaseMenu(self):
         messagebox.showinfo("Special Case", specialCaseText)
+        
+    def breakIfErrorMenu(self):
+        messagebox.showinfo("Break If Error.", breakIfErrorText)
