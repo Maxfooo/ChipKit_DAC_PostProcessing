@@ -45,15 +45,16 @@ class PostProcessingUI(Frame):
         daqPortFrame = Frame(daqFrame)
         daqPortLabel = Label(daqPortFrame, text="uC Comm Port:", anchor='w', width=15)
         daqPortLabel.pack(side='left', fill=BOTH)
-        availablePorts = serial_ports()
-        self.daqPortListBox = Listbox(daqPortFrame, selectmode=SINGLE, heigh=len(availablePorts))
-        for ports in availablePorts:
-            self.daqPortListBox.insert(END, ports)
+        self.daqPortListBox = Listbox(daqPortFrame, selectmode=SINGLE)
+        self.refreshComPorts()
         self.daqPortListBox.pack(side='left', fill=BOTH)
         self.daqSelectedPortLabel = Label(daqPortFrame, text=self.comPort, width=15, \
                                      anchor='w')
         self.daqSelectedPortLabel.pack(side='left', fill=BOTH)
         self.daqPortListBox.bind('<<ListboxSelect>>', self.setComPort)
+        daqPortRefreshButton = Button(daqPortFrame, text='Refresh Ports', width=15, \
+                                      command=self.refreshComPorts, bg=self.buttonColor)
+        daqPortRefreshButton.pack(side='left', fill='y')
         daqPortFrame.pack(fill=BOTH)
         
         daqBaudRateFrame = Frame(daqFrame)
@@ -256,6 +257,18 @@ class PostProcessingUI(Frame):
         except IOError:
             messagebox.showerror("File Error", "Could not open file.")
         
+    def refreshComPorts(self):
+        try:
+            self.comPort = 'No Com Port\nSelected'
+            self.daqSelectedPortLabel.config(text=self.comPort)
+            self.microNotConnectedLabel()
+        except:
+            pass
+        availablePorts = serial_ports()
+        self.daqPortListBox.delete(0, END)
+        for ports in availablePorts:
+            self.daqPortListBox.insert(END, ports)
+        self.daqPortListBox.config(height=len(availablePorts))
     
     def setComPort(self, event):
         sel = self.daqPortListBox.curselection()
@@ -273,15 +286,24 @@ class PostProcessingUI(Frame):
         else:
             try:
                 self.baudRate = int(self.daqBaudRateEntry.get())
-                
-                self.mcs = MCS(self.comPort, self.baudRate)
-                self.microConnected = str(self.mcs.testConnection())
+                if self.comPort in serial_ports():
+                    self.mcs = MCS(self.comPort, self.baudRate)
+                    self.microConnected = str(self.mcs.testConnection())
+                    self.mcs.close()
+                else:
+                    self.microNotConnectedLabel()
+                    messagebox.showerror("No Com Port", "Please refresh com ports.")
                 
                 self.daqTestConnectionLabel.config(text=self.microConnected)
                 
             except ValueError:
+                self.microNotConnectedLabel()
                 messagebox.showerror('Type Error', 'Incorrect type for Baud Rate.')
-     
+    
+    def microNotConnectedLabel(self):
+        self.microConnected = "Not Connected"
+        self.daqTestConnectionLabel.config(text=self.microConnected)
+    
     def stopDaq(self):
         self.daqCurrentModeLabel.config(text="Mode: Stopped")
         # start daq
