@@ -18,6 +18,7 @@ http://www.analog.com/media/en/technical-documentation/data-sheets/AD7780.pdf
 """
 import re
 
+
 ERR_0 = 'Too Many Samples'
 ERR_1 = 'Too Few Samples'
 ERR_2 = 'Repeat Code'
