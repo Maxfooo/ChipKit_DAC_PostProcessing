@@ -9,6 +9,9 @@ from ExtractData import ExtractData
 from menuTexts import specialCaseText
 from FileIO import FileIO
 from tkinter import messagebox
+from Utils import serial_ports
+import re
+from MicroControllerSerial import MicroControllerSerial as MCS
 
 class PostProcessingUI(Frame):
     def __init__(self, master=None):
@@ -16,12 +19,19 @@ class PostProcessingUI(Frame):
         master.title('DAC Results Post Processing')
         self.pack()
         
-        self.fileIO = FileIO()
-        self.inputFile = None
+        self.fio = FileIO()
+        self.daqInputFilePath = "C:/Users/maxr/Desktop/PythonWorkspaces/ScriptForDACDAQ/ChipKit_DAC_PostProcessing/dac_data_spec.csv"
+        self.daqInputFile = None
+        self.comPort = 'No Com Port\nSelected'
+        self.baudRate = '115200'
+        self.microConnected = 'Not Connected'
+        
+        self.postProcFilePath = "C:/Users/maxr/Desktop/PythonWorkspaces/ScriptForDACDAQ/ChipKit_DAC_PostProcessing/dac_data_spec.csv"
+        self.postProcFile = None
         self.dnlFile = None
         self.inlFile = None
         
-        self.buttonColor = '#000fff000'
+        self.buttonColor = 'light blue'
         
         self.menuBar()
         self.mainFrame()
@@ -29,17 +39,90 @@ class PostProcessingUI(Frame):
         
     def mainFrame(self):
         
-        "Input Frame***********************************************************"
-        paramInputFrame = LabelFrame(self, text='Chip Parameter Input Field')
+        "DAQ Frame*************************************************************"
+        daqFrame = LabelFrame(self, text='Data Acquisition Field')
         
-        openFileFrame = Frame(paramInputFrame)
-        openFileLabel_0 = Label(openFileFrame, text='Open File: ', anchor='w', width=22)
-        openFileLabel_0.pack(side=LEFT)
-        openFileButton = Button(openFileFrame, text='Open',bg=self.buttonColor, command=self.getFile, width=16)
-        openFileButton.pack(side=LEFT)
-        openFileLabel_1 = Label(openFileFrame, text='File')
-        openFileLabel_1.pack(side=LEFT)
-        openFileFrame.pack(fill=BOTH)
+        daqPortFrame = Frame(daqFrame)
+        daqPortLabel = Label(daqPortFrame, text="uC Comm Port:", anchor='w', width=15)
+        daqPortLabel.pack(side='left', fill=BOTH)
+        availablePorts = serial_ports()
+        self.daqPortListBox = Listbox(daqPortFrame, selectmode=SINGLE, heigh=len(availablePorts))
+        for ports in availablePorts:
+            self.daqPortListBox.insert(END, ports)
+        self.daqPortListBox.pack(side='left', fill=BOTH)
+        self.daqSelectedPortLabel = Label(daqPortFrame, text=self.comPort, width=15, \
+                                     anchor='w')
+        self.daqSelectedPortLabel.pack(side='left', fill=BOTH)
+        self.daqPortListBox.bind('<<ListboxSelect>>', self.setComPort)
+        daqPortFrame.pack(fill=BOTH)
+        
+        daqBaudRateFrame = Frame(daqFrame)
+        daqBaudRateLabel = Label(daqBaudRateFrame, text='Serial Baud Rate:', anchor='w', \
+                                 width=15)
+        daqBaudRateLabel.pack(side='left', fill=BOTH)
+        baudRateStrVar = StringVar()
+        self.daqBaudRateEntry = Entry(daqBaudRateFrame, textvariable=baudRateStrVar)
+        baudRateStrVar.set(self.baudRate)
+        self.daqBaudRateEntry.pack(side='left', fill=BOTH)
+        daqBaudRateFrame.pack(fill=BOTH)
+        
+        daqTestConnectionFrame = Frame(daqFrame)
+        daqTestConnectionButton = Button(daqTestConnectionFrame, text='Test Connection', \
+                                         width=15, bg=self.buttonColor, \
+                                         command=self.testMicroConnection)
+        daqTestConnectionButton.pack(side='left', fill=BOTH)
+        self.daqTestConnectionLabel = Label(daqTestConnectionFrame, text=self.microConnected, \
+                                            anchor='w', width=15)
+        self.daqTestConnectionLabel.pack(side='left', fill=BOTH)
+        daqTestConnectionFrame.pack(fill=BOTH)
+        
+        
+        daqFileFrame = Frame(daqFrame)
+        daqInputFileButton = Button(daqFileFrame, text='DAQ File Browse', \
+                                    command=self.selectDaqFile, bg=self.buttonColor, \
+                                    width=15)
+        daqInputFileButton.pack(side='left')
+        self.daqFilePathLabel = Label(daqFileFrame, text=self.daqInputFilePath, \
+                                      wraplength=300, anchor='w')
+        self.daqFilePathLabel.pack(side='left', fill=BOTH)
+        daqFileFrame.pack(fill=BOTH)
+        
+        daqStopStartFrame = Frame(daqFrame)
+        daqStopButton = Button(daqStopStartFrame, text='STOP', bg='#ee7676', \
+                               command=self.stopDaq, width=15)
+        daqStopButton.pack(side='left')
+        self.daqCurrentModeLabel = Label(daqStopStartFrame, text="Mode: Stopped")
+        self.daqCurrentModeLabel.pack(side='left')
+        daqStartButton = Button(daqStopStartFrame, text='START', bg='#76ee81', \
+                                command=self.startDaq, width=15)
+        daqStartButton.pack(side='left', fill=BOTH)
+        daqStopStartFrame.pack(fill=BOTH)
+        
+        
+        
+        daqFrame.pack(fill=BOTH)
+        
+        "Input Frame***********************************************************"
+        paramInputFrame = LabelFrame(self, text='Post Processing Parameter Input Field')
+        
+        postProcFileFrame = Frame(paramInputFrame)
+        postProcFileButton = Button(postProcFileFrame, text='Post Proc File',bg=self.buttonColor, \
+                                command=self.selectPostProcFile, width=15)
+        postProcFileButton.pack(side=LEFT)
+        self.postProcFilePathLabel = Label(postProcFileFrame, text=self.postProcFilePath, \
+                                           wraplength=300, anchor='w')
+        self.postProcFilePathLabel.pack(side=LEFT)
+        postProcFileFrame.pack(fill=BOTH)
+        
+        adcPrecisionFrame = Frame(paramInputFrame)
+        adcPrecisionLabel_0 = Label(adcPrecisionFrame, text='ADC Precision: ', anchor='w', width=22)
+        adcPrecisionLabel_0.pack(side=LEFT)
+        adcPrecision = StringVar()
+        self.adcPrecisionEntry = Entry(adcPrecisionFrame, textvariable=adcPrecision)
+        self.adcPrecisionEntry.pack(side=LEFT)
+        adcPrecisionLabel_1 = Label(adcPrecisionFrame, text='Bits')
+        adcPrecisionLabel_1.pack(side=LEFT)
+        adcPrecisionFrame.pack(fill=BOTH)
         
         dacPrecisionFrame = Frame(paramInputFrame)
         dacPrecisionLabel_0 = Label(dacPrecisionFrame, text='DAC Precision: ', anchor='w', width=22)
@@ -159,17 +242,68 @@ class PostProcessingUI(Frame):
         
         "Log Frame*************************************************************"
         logFrame = LabelFrame(self, text='Log')
-        self.logMessage = 'App Log.'
-        logLabel = Label(logFrame, text=self.logMessage, anchor='nw', width=50, \
+        self.logLabel = Label(logFrame, text="App Log", anchor='nw', width=50, \
                          height=3, bg='white')
-        logLabel.pack(fill=BOTH)
+        self.logLabel.pack(fill=BOTH)
         logFrame.pack(fill=BOTH)
         
     def beginProcessing(self):
-        pass
+        try:
+            self.postProcFile = open(self.postProcFilePath, 'r')
+            # do post processing
+        
+            self.postProcFile.close()
+        except IOError:
+            messagebox.showerror("File Error", "Could not open file.")
+        
     
-    def getFile(self):
-        pass
+    def setComPort(self, event):
+        sel = self.daqPortListBox.curselection()
+        self.comPort = self.daqPortListBox.get(sel)
+        self.daqSelectedPortLabel.config(text=self.comPort)
+        
+    def selectDaqFile(self):
+        self.fio.fileLocation()
+        self.daqInputFilePath = self.fio.getFileLocation()
+        self.daqFilePathLabel.config(text=self.daqInputFilePath)
+    
+    def testMicroConnection(self):
+        if not re.match(r'COM\d+', self.comPort):
+            messagebox.showerror("No Com Port", "Please select a com port!")
+        else:
+            try:
+                self.baudRate = int(self.daqBaudRateEntry.get())
+                
+                self.mcs = MCS(self.comPort, self.baudRate)
+                self.microConnected = str(self.mcs.testConnection())
+                
+                self.daqTestConnectionLabel.config(text=self.microConnected)
+                
+            except ValueError:
+                messagebox.showerror('Type Error', 'Incorrect type for Baud Rate.')
+     
+    def stopDaq(self):
+        self.daqCurrentModeLabel.config(text="Mode: Stopped")
+        # start daq
+        self.daqInputFile.close()
+    
+    def startDaq(self):
+        if not re.match(r'COM\d+', self.comPort):
+            messagebox.showerror("No Com Port", "Please select a com port!")
+        else:
+            try:
+                self.daqInputFile = open(self.daqInputFilePath, 'w')
+                self.daqCurrentModeLabel.config(text="Mode: Running")
+                self.baudRate = int(self.daqBaudRateEntry.get())
+            except ValueError:
+                messagebox.showerror('Type Error', 'Incorrect type for Baud Rate.')
+            except IOError:
+                messagebox.showerror("File Error", "Could not open file.")
+    
+    def selectPostProcFile(self):
+        self.fio.fileLocation()
+        self.postProcFilePath = self.fio.getFileLocation()
+        self.postProcFilePathLabel.config(text=self.postProcFilePath)
     
     def menuBar(self):
         self.menubar = Menu(self)
