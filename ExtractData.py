@@ -17,6 +17,7 @@ http://www.analog.com/media/en/technical-documentation/data-sheets/AD7780.pdf
 
 """
 import re
+from tkinter import messagebox
 
 
 ERR_0 = 'Too Many Samples'
@@ -34,6 +35,7 @@ class ExtractData(object):
         self.max_adc_value = chipSpecs[1]
         self.samples_per_code = chipSpecs[2]
         self.max_voltage = chipSpecs[3]
+        self.errorOccured = False
         
         self.specCase = specialCase
         self.break_when_err = break_when_err
@@ -72,6 +74,7 @@ class ExtractData(object):
                 if sampleCount >= self.samples_per_code:
                     self.errorDict[ERR_0].append('Line: {0}, Entry: {1}'.format(lineNum, line))
                     if self.break_when_err:
+                        self.errorOccured = True
                         break
                 self.sampleDict[word[0]].append(voltage)
                 self.pswDict[word[0]].append(word[2])
@@ -81,10 +84,12 @@ class ExtractData(object):
                 if sampleCount != self.samples_per_code-1:
                     self.errorDict[ERR_1].append('Line: {0}, Entry: {1}'.format(lineNum, line))
                     if self.break_when_err:
+                        self.errorOccured = True
                         break
                 if word[0] in self.sampleDict.keys():
                     self.errorDict[ERR_2].append('Line: {0}, Entry: {1}'.format(lineNum, line))
                     if self.break_when_err:
+                        self.errorOccured = True
                         break
                 self.sampleDict[word[0]] = [voltage]
                 self.pswDict[word[0]] = [word[2]]
@@ -93,6 +98,7 @@ class ExtractData(object):
             else:
                 self.errorDict[ERR_3].append('Line: {0}, Entry: {1}'.format(lineNum, line))
                 if self.break_when_err:
+                    self.errorOccured = True
                     break
                 self.sampleDict[word[0]] = [voltage]
                 self.pswDict[word[0]] = [word[2]]
@@ -102,7 +108,7 @@ class ExtractData(object):
             lineNum += 1
                     
         f.close()
-        
+    
     def getSamples(self):
         return self.sampleDict
     
@@ -128,6 +134,12 @@ class ExtractData(object):
                     f.write(err)
             f.write("\n")
         f.close()
+        
+        if self.errorOccured:
+            messagebox.showerror('Error in file.', 'While processing the file, ' +
+                                 'at least one error was found. See help for details ' +
+                                 'about possible errors and check the \'ErrorLog.txt\' ' +
+                                 'for details on what the error was.')
             
             
             
