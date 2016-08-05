@@ -21,26 +21,26 @@ LSB = MAX_VOLTAGE / MAX_ADC_VALUE
 SPECIAL_CASE = True
 BREAK_WHEN_ERR = False
 
+script = 0
+
 if __name__ == '__main__':
     
-    ED = ExtractData(FILE_NAME, FILE, CHIP_SPECS, SPECIAL_CASE, BREAK_WHEN_ERR)
-    avg = ED.averageSamples()
-    dnl = []
-    volt = []
-    for k in avg:
-        volt.append(avg[k])
-    print(volt)
-    dnl = DNL(volt, LSB)
-    print(dnl)
-    quickPlot(dnl, ttl="DNL of 12 bit dac", xlbl="Code", ylbl="LSB")
-    quickPlot(volt,ylbl='Volt')
-    """
+    if script:
+        ED = ExtractData(FILE_NAME, FILE, CHIP_SPECS, SPECIAL_CASE, BREAK_WHEN_ERR)
+        avg = ED.averageSamples()
+        dnl = []
+        volt = []
+        for k in avg:
+            volt.append(avg[k])
+        dnl = DNL(volt, LSB)
+        quickPlot(dnl, ttl="DNL of 12 bit dac", xlbl="Code", ylbl="LSB")
+        quickPlot(volt,ylbl='Volt')
+    else:
 
     
-    root = Tk()
-    app = PostProcessingUI(master=root)
-    app.mainloop()
-    """
+        root = Tk()
+        app = PostProcessingUI(master=root)
+        app.mainloop()
     
     
     
