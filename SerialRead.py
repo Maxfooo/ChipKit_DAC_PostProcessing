@@ -5,7 +5,6 @@ Created on Jul 29, 2016
 '''
 
 import time
-import serial
 from MicroControllerSerial import MicroControllerSerial as MCS
 
 
@@ -14,5 +13,8 @@ BAUD_RATE = 115200
 ser = MCS(COM_PORT, BAUD_RATE)
 
 data = ''
-while(data != 'DONE'):
+while(data == ''):
     data = ser.readline()
+    print(data)
+    ser.close()
+    data = 'd'
