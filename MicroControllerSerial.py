@@ -9,7 +9,14 @@ from Utils import serial_ports
 
 class MicroControllerSerial(object):
     
+    
     def __init__(self, port, baudrate=115200):
+        self.connectCmd = b'0'
+        self.conversionCmd = b'1'
+        self.sampleCmd = b'2'
+        self.resetCmd = b'3'
+        self.progressCmd = b'4'
+        
         try:
             if port in serial_ports():
                 self.serial = serial.Serial(port, baudrate, timeout=5)
@@ -18,14 +25,26 @@ class MicroControllerSerial(object):
                 self.noComPortError()
         except:
             self.noConnctError()
-        
-    def readline(self):
-        self.__sendData(b'0')
+    
+    def txrx(self, cmd):
+        self.__sendData(cmd)
         return self.__getData()
     
     def testConnection(self):
-        self.__sendData(b'1')
-        return self.__getData()
+        return self.txrx(self.connectCmd)
+    
+    def startConversion(self):
+        return self.txrx(self.conversionCmd)
+        
+    def readSample(self):
+        return self.txrx(self.sampleCmd)
+        
+    def stopAndReset(self):
+        return self.txrx(self.resetCmd)
+        
+    def checkProgress(self):
+        return self.txrx(self.progressCmd)
+    
     
     def __sendData(self, serial_data):
         try:
