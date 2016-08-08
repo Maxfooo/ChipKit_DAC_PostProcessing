@@ -12,6 +12,8 @@ from tkinter import messagebox
 from Utils import serial_ports
 import re
 from MicroControllerSerial import MicroControllerSerial as MCS
+from DAC_Experiment import DAC_Experiment
+
 
 class PostProcessingUI(Frame):
     def __init__(self, master=None):
@@ -24,7 +26,8 @@ class PostProcessingUI(Frame):
         self.daqInputFile = None
         self.comPort = 'No Com Port\nSelected'
         self.baudRate = '115200'
-        self.microConnected = 'Not Connected'
+        self.microReceive = 'Not Connected'
+        self.runningDACDAQ = False
         
         self.postProcFilePath = "C:/Users/maxr/Desktop/PythonWorkspaces/ScriptForDACDAQ/ChipKit_DAC_PostProcessing/dac_data_spec.csv"
         self.postProcFile = None
@@ -72,7 +75,7 @@ class PostProcessingUI(Frame):
                                          width=15, bg=self.buttonColor, \
                                          command=self.testMicroConnection)
         daqTestConnectionButton.pack(side='left', fill=BOTH)
-        self.daqTestConnectionLabel = Label(daqTestConnectionFrame, text=self.microConnected, \
+        self.daqTestConnectionLabel = Label(daqTestConnectionFrame, text=self.microReceive, \
                                             anchor='w', width=15)
         self.daqTestConnectionLabel.pack(side='left', fill=BOTH)
         daqTestConnectionFrame.pack(fill=BOTH)
@@ -303,35 +306,55 @@ class PostProcessingUI(Frame):
                 self.baudRate = int(self.daqBaudRateEntry.get())
                 if self.comPort in serial_ports():
                     self.mcs = MCS(self.comPort, self.baudRate)
-                    self.microConnected = str(self.mcs.testConnection())
+                    self.mcs.testConnection()
                     self.mcs.close()
+                    self.microWasConnectedLabel()
                 else:
                     self.microNotConnectedLabel()
                     messagebox.showerror("No Com Port", "Please refresh com ports.")
-                
-                self.daqTestConnectionLabel.config(text=self.microConnected)
                 
             except ValueError:
                 self.microNotConnectedLabel()
                 messagebox.showerror('Type Error', 'Incorrect type for Baud Rate.')
     
     def microNotConnectedLabel(self):
-        self.microConnected = "Not Connected"
-        self.daqTestConnectionLabel.config(text=self.microConnected)
+        self.microReceive = "Not Connected"
+        self.daqTestConnectionLabel.config(text=self.microReceive)
+        
+    def microWasConnectedLabel(self):
+        self.microReceive = "Connected"
+        self.daqTestConnectionLabel.config(text=self.microReceive)
     
     def stopDaq(self):
-        self.daqCurrentModeLabel.config(text="Mode: Stopped")
-        # start daq
-        self.daqInputFile.close()
+        if self.runningDACDAQ == True:
+            self.mcs.stopAndReset()
+            self.daqCurrentModeLabel.config(text="Mode: Stopped")
+            self.daqInputFile.close()
+            self.runningDACDAQ = False
+        else:
+            pass
     
     def startDaq(self):
-        if not re.match(r'COM\d+', self.comPort):
-            messagebox.showerror("No Com Port", "Please select a com port!")
+        self.testMicroConnection()
+        
+        if not self.microReceive == 'Connected':
+            messagebox.showerror('Fix Connection', 'Make sure the Micro is actually connected.')
         else:
             try:
-                self.daqInputFile = open(self.daqInputFilePath, 'w')
-                self.daqCurrentModeLabel.config(text="Mode: Running")
-                self.baudRate = int(self.daqBaudRateEntry.get())
+                if self.runningDACDAQ == False:
+                    self.daqInputFile = open(self.daqInputFilePath, 'w')
+                    self.daqCurrentModeLabel.config(text="Mode: Running")
+                    self.mcs = MCS(self.comPort, self.baudRate)
+                    self.runningDACDAQ = True
+                    
+                    dacExperiment = DAC_Experiment(self.mcs, self.daqInputFile, 1)
+                    dacExperiment.start()
+                    dacExperiment.join()
+                    
+                    self.stopDaq()
+                else:
+                    messagebox.showerror('Still Running', 'The experiment is still running.')
+                    
             except ValueError:
                 messagebox.showerror('Type Error', 'Incorrect type for Baud Rate.')
             except IOError:
