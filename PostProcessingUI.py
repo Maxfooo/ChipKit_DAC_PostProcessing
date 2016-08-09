@@ -13,6 +13,8 @@ from Utils import serial_ports
 import re
 from MicroControllerSerial import MicroControllerSerial as MCS
 from DAC_Experiment import DAC_Experiment
+from time import sleep
+import threading
 
 
 class PostProcessingUI(Frame):
@@ -347,11 +349,14 @@ class PostProcessingUI(Frame):
                     self.mcs = MCS(self.comPort, self.baudRate)
                     self.runningDACDAQ = True
                     
+                    """
                     dacExperiment = DAC_Experiment(self.mcs, self.daqInputFile, 1)
                     dacExperiment.start()
                     dacExperiment.join()
+                    """
                     
-                    self.stopDaq()
+                    threading.Thread(target=self.run_dac_experiment).start()
+                    
                 else:
                     messagebox.showerror('Still Running', 'The experiment is still running.')
                     
@@ -359,6 +364,29 @@ class PostProcessingUI(Frame):
                 messagebox.showerror('Type Error', 'Incorrect type for Baud Rate.')
             except IOError:
                 messagebox.showerror("File Error", "Could not open file.")
+    
+    def run_dac_experiment(self):
+        
+        print(self.mcs.stopAndReset())
+        print(self.mcs.startConversion())
+        _progress = self.mcs.checkProgress()
+        _progressFF = _progress
+        print("progress", _progress, type(_progress))
+        while(_progress == _progressFF):
+            _progressFF = _progress
+            print(4)
+            _sample = self.mcs.readSample()
+            while(_sample != "NoSample"):
+                print(5)
+                self.daqInputFile.write(_sample)
+            self.mcs.startConversion()
+            _progress = self.mcs.checkProgress()
+            
+        
+        
+        self.stopDaq()
+        print("Stop")
+        
     
     def selectPostProcFile(self):
         self.fio.fileLocation()
