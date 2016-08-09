@@ -12,7 +12,6 @@ from tkinter import messagebox
 from Utils import serial_ports
 import re
 from MicroControllerSerial import MicroControllerSerial as MCS
-from DAC_Experiment import DAC_Experiment
 from time import sleep
 import threading
 
@@ -30,6 +29,7 @@ class PostProcessingUI(Frame):
         self.baudRate = '115200'
         self.microReceive = 'Not Connected'
         self.runningDACDAQ = False
+        self.daqThreadActive = False
         
         self.postProcFilePath = "C:/Users/maxr/Desktop/PythonWorkspaces/ScriptForDACDAQ/ChipKit_DAC_PostProcessing/dac_data_spec.csv"
         self.postProcFile = None
@@ -329,10 +329,13 @@ class PostProcessingUI(Frame):
     
     def stopDaq(self):
         if self.runningDACDAQ == True:
+            self.runningDACDAQ = False
+            while self.daqThreadActive:
+                pass
             self.mcs.stopAndReset()
+            self.mcs.close()
             self.daqCurrentModeLabel.config(text="Mode: Stopped")
             self.daqInputFile.close()
-            self.runningDACDAQ = False
         else:
             pass
     
@@ -349,12 +352,6 @@ class PostProcessingUI(Frame):
                     self.mcs = MCS(self.comPort, self.baudRate)
                     self.runningDACDAQ = True
                     
-                    """
-                    dacExperiment = DAC_Experiment(self.mcs, self.daqInputFile, 1)
-                    dacExperiment.start()
-                    dacExperiment.join()
-                    """
-                    
                     threading.Thread(target=self.run_dac_experiment).start()
                     
                 else:
@@ -366,26 +363,21 @@ class PostProcessingUI(Frame):
                 messagebox.showerror("File Error", "Could not open file.")
     
     def run_dac_experiment(self):
-        
-        print(self.mcs.stopAndReset())
-        print(self.mcs.startConversion())
+        self.daqThreadActive = True
+        self.mcs.stopAndReset()
+        self.mcs.startConversion()
         _progress = self.mcs.checkProgress()
         _progressFF = _progress
-        print("progress", _progress, type(_progress))
-        while(_progress == _progressFF):
+        while(_progress == _progressFF and self.runningDACDAQ):
             _progressFF = _progress
-            print(4)
             _sample = self.mcs.readSample()
-            while(_sample != "NoSample"):
-                print(5)
+            while("NoSample" not in _sample and self.runningDACDAQ):
                 self.daqInputFile.write(_sample)
+                _sample = self.mcs.readSample()
             self.mcs.startConversion()
             _progress = self.mcs.checkProgress()
-            
-        
-        
+        self.daqThreadActive = False
         self.stopDaq()
-        print("Stop")
         
     
     def selectPostProcFile(self):
