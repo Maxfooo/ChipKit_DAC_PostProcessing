@@ -24,36 +24,40 @@ class MicroControllerSerial(object):
             else:
                 self.noComPortError()
         except:
-            self.noConnctError()
+            self.noConnectError()
     
     def txrx(self, cmd):
         self.__sendData(cmd)
         return self.__getData()
     
     def testConnection(self):
-        return self.txrx(self.connectCmd)
+        self.__sendData(self.connectCmd)
+        return self.__getData()
     
     def startConversion(self):
-        return self.txrx(self.conversionCmd)
+        self.__sendData(self.conversionCmd)
+        return self.__getData()
         
     def readSample(self):
-        return self.txrx(self.sampleCmd)
+        self.__sendData(self.sampleCmd)
+        return self.__getData()
         
     def stopAndReset(self):
-        return self.txrx(self.resetCmd)
+        self.__sendData(self.resetCmd)
+        return self.__getData()
         
     def checkProgress(self):
-        return self.txrx(self.progressCmd)
+        self.__sendData(self.progressCmd)
+        return self.__getData()
     
     
     def __sendData(self, serial_data):
         try:
             while(self.__getData()[0] != "w"):
                 pass
-            serial_data = str(serial_data).encode('utf-8')
             self.serial.write(serial_data)
         except IndexError:
-            self.noConnctError()
+            self.noConnectError()
 
     def __getData(self):
         try:
@@ -62,13 +66,19 @@ class MicroControllerSerial(object):
             return input_string.rstrip('\n')
         except:
             return "Not Connected"
+        
+    def flushInput(self):
+        self.serial.flushInput()
+    
+    def flushOutput(self):
+        self.serial.flushOutput()
     
     def close(self):
         self.serial.close()
         return True
     
     @classmethod
-    def noConnctError(cls):
+    def noConnectError(cls):
         root = Tk()
         root.withdraw()
         messagebox.showerror("No connection", "Could not connect to Micro.")
