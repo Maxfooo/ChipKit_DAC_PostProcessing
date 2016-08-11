@@ -32,6 +32,7 @@ void setup()
   pinMode(npdrst_pin, OUTPUT);
   
   pinMode(triggerNC, OUTPUT);
+  digitalWrite(triggerNC, LOW);
   
   digitalWrite(npdrst_pin, HIGH);
   digitalWrite(gain_pin, GAIN_SETTING);
@@ -105,6 +106,7 @@ void loop()
       dac_code = 0;
       current_sample = 0;
       zeroFillBuffer();
+      digitalWrite(triggerNC, LOW);
       Serial.println("NoSample");
       break;
       
