@@ -38,7 +38,7 @@ void setup()
   pinMode(bit10, OUTPUT);
   pinMode(bit11, OUTPUT);
   
-  pinMode(trigger_pin, INPUT_PULLUP);
+  pinMode(trigger_pin, INPUT);
   attachInterrupt(trigger_pin, trigger_func, RISING);
   
   set_dac_code(dac_code);
