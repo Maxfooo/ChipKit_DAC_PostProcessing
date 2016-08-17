@@ -1,6 +1,6 @@
 # ChipKit_DAC_PostProcessing
 
-Run Analysis.py as main.
+* Run Analysis.py as main.
 
 * The UI will run the microcontroller to perform a binary up counter sweep (12 bits) on a DAC, and read back the results.
 * The post processing portion of the UI is ready to use, but it will only plot one set at a time right now.
