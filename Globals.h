@@ -49,6 +49,7 @@ int npdrst_pin = 3;
 
 // Start DAQ pins
 int triggerNC = 52; // trigger next code pin
+int hardwareReset = 50; // harware reset pin to FPGA
 unsigned int dac_code = 0;
 unsigned int nReady = 1;
 unsigned int adc_word = 0;
