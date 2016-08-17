@@ -75,6 +75,12 @@ def findSlope(x,y):
 def DNL(volt, lsb):
     # volt is a list
     # lsb is a voltage
+    """ DNL
+    The first value of dnl is 0. 
+    The rest of the values are determined by taking the current voltage value, 
+    subtracting the previous voltage from it, then subtracting the lsb from that. 
+    After the subtraction, divide everything by the lsb.
+    """
     dnl = []
     for i, v in enumerate(volt):
         if i > 0:
@@ -84,7 +90,15 @@ def DNL(volt, lsb):
             dnl.append(0)
     return dnl
 
+
 def INL(volt, lsb):
+    """ INL
+    The first value of inl is 0.
+    The rest of the values are determined by taking the current voltage value,
+    subtracting the product of the index of that value (dac code) and the lsb, 
+    then subtracting the voltage value for the dac code of 0, which is the offset. 
+    After the subtraction, divide everything by the lsb.
+    """
     offset = volt[0]
     inl = []
     for i, v in enumerate(volt):
