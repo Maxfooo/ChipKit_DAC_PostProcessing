@@ -11,8 +11,37 @@ from statistics import mean, stdev
 import sys
 import glob
 import serial
+from tkinter import filedialog
+import tkinter
+
+def readFile(exten='.hex', ftypes=[('all files', '.*')], idir='C:\\',
+                 ifilen='myfile.hex', title='Open File'):
+        root = tkinter.Tk()
+        file_opt = options = {}
+        options['defaultextension'] = exten
+        options['filetypes'] = ftypes
+        options['initialdir'] = idir
+        options['initialfile'] = ifilen
+        options['parent'] = root
+        options['title'] = title
+        root.withdraw()
+        return filedialog.askopenfile(mode='r', **file_opt)
+
+def writeFile(exten='.hex', ftypes=[('all files', '.*')], idir='C:\\',
+                 ifilen='myfile.hex', title='Save File'):
+        root = tkinter.Tk()
+        file_opt = options = {}
+        options['defaultextension'] = exten
+        options['filetypes'] = ftypes
+        options['initialdir'] = idir
+        options['initialfile'] = ifilen
+        options['parent'] = root
+        options['title'] = title
+        root.withdraw()
+        return filedialog.asksaveasfile(mode='w', **file_opt)
 
 def quickPlot(x,y=None, ttl='DAC Voltage', xlbl = 'Time (sec)', ylbl='VDC (V)'):
+    plt.figure()
     if y == None:
         plt.plot(x)
     else:
