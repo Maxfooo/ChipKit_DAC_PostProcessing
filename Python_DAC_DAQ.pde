@@ -34,6 +34,9 @@ void setup()
   pinMode(triggerNC, OUTPUT);
   digitalWrite(triggerNC, LOW);
   
+  pinMode(hardwareReset, OUTPUT);
+  digitalWrite(hardwareReset, LOW); // set FPGA into reset mode until triggered
+  
   digitalWrite(npdrst_pin, HIGH);
   digitalWrite(gain_pin, GAIN_SETTING);
   digitalWrite(filter_pin, FILTER_SETTING); 
@@ -49,6 +52,7 @@ void loop()
     // Test connection
     /*******************************/
     case 0:
+      resetFPGA();
       Serial.println("Connected");
       break;
     
@@ -60,9 +64,14 @@ void loop()
       {
        conversionDone = 1;
        Serial.println("Done");
+       resetFPGA();
       }
       else
       {
+        if(dac_code == 0)
+        {
+         resetFPGA(); 
+        }
         conversionDone = 0;
         current_sample = 0;
         digitalWrite(npdrst_pin, HIGH);
@@ -106,6 +115,7 @@ void loop()
       dac_code = 0;
       current_sample = 0;
       zeroFillBuffer();
+      resetFPGA();
       digitalWrite(triggerNC, LOW);
       Serial.println("NoSample");
       break;
@@ -129,6 +139,15 @@ void loop()
       
     
   }
+}
+
+void resetFPGA()
+{
+ // FPGA reset is active low
+ digitalWrite(hardwareReset, LOW);
+ delay(10);
+ digitalWrite(hardwareReset, HIGH);
+ delay(100); 
 }
 
 char readData() 
