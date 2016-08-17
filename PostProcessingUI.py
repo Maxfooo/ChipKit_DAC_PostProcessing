@@ -9,7 +9,7 @@ from ExtractData import ExtractData
 from menuTexts import *
 from FileIO import FileIO
 from tkinter import messagebox
-from Utils import serial_ports
+from Utils import serial_ports, quickPlot, quickNormal, DNL, INL, readFile, writeFile
 import re
 from MicroControllerSerial import MicroControllerSerial as MCS
 from time import sleep
@@ -35,7 +35,7 @@ class PostProcessingUI(Frame):
         self.postProcFile = None
         self.dnlFile = None
         self.inlFile = None
-        
+                
         self.buttonColor = 'light blue'
         
         self.menuBar()
@@ -165,6 +165,7 @@ class PostProcessingUI(Frame):
         specialCaseCheckbutton = Checkbutton(specialCaseFrame, text='Special Case? (see help for details)', \
                                              variable=self.specialCase, onvalue=1, \
                                              offvalue=0, anchor='w', width=22) 
+        specialCaseCheckbutton.select()
         specialCaseCheckbutton.pack(fill=BOTH)
         
         self.breakIfErrorVar = BooleanVar()
@@ -272,6 +273,56 @@ class PostProcessingUI(Frame):
                                   break_when_err=self.breakIfErrorVar.get())
         
             self.postProcFile.close()
+            
+            _avgSmpl = self.ED.averageSamples()
+            _rawSmpl = self.ED.getSamples()
+
+            _avgVolt = []
+            _rawVolt = []
+            for k in _rawSmpl:
+                    _rawVolt.append(_rawSmpl[k])
+            for k in _avgSmpl:
+                _avgVolt.append(_avgSmpl[k])
+            _lsb = _chipSpecs[3] / float(self.dacPrecisionEntry.get())
+            _dnl = DNL(_avgVolt, _lsb)
+            _inl = INL(_avgVolt, _lsb)
+            
+            if (self.dnlFileCheck.get() == 1):
+                self.dnlFile = writeFile(exten='.csv', ftypes=[('comma separated value', '.csv'), \
+                                                                       ('all files', '.*')], \
+                                                 ifilen='DNL_File.csv')
+                for line in _dnl:
+                    self.dnlFile.write(str(line) + ',\n')
+                self.dnlFile.close()
+                
+            if (self.inlFileCheck.get() == 1):
+                self.inlFile = writeFile(exten='.csv', ftypes=[('comma separated value', '.csv'), \
+                                                                       ('all files', '.*')], \
+                                                 ifilen='INL_File.csv')
+                for line in _inl:
+                    self.inlFile.write(str(line) + ',\n')
+                self.inlFile.close()
+                
+            if (self.dataPlotRaw.get() == 1):
+                quickPlot(_rawVolt,xlbl='Code', ylbl='Volt')
+                
+            if (self.dataPlotAverage.get() == 1):
+                quickPlot(_avgVolt,xlbl='Code', ylbl='Volt')
+                
+            if (self.dnlQuickPlotCheck.get() == 1):
+                quickPlot(_dnl, ttl="DNL of {} bit DAC".format(self.dacPrecisionEntry.get()), \
+                          xlbl="Code", ylbl="LSB")
+                
+            if (self.dnlNormalPlotCheck.get() == 1):
+                quickNormal(_dnl, view=[-0.1, 0.1, 100], ttl="DNL Normal Dist of {} bit DAC".format(self.dacPrecisionEntry.get()))
+            
+            if (self.inlQuickPlotCheck.get() == 1):
+                quickPlot(_dnl, ttl="INL of {} bit DAC".format(self.dacPrecisionEntry.get()), \
+                          xlbl="Code", ylbl="LSB")
+                
+            if (self.inlNormalPlotCheck.get() == 1):
+                quickNormal(_inl, view=[-5, 5, 100], ttl="INL Normal Dist of {} bit DAC".format(self.dacPrecisionEntry.get()))
+            
         except IOError:
             messagebox.showerror("File Error", "Could not open file.")
         except ValueError:
